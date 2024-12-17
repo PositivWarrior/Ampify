@@ -36,13 +36,15 @@ const Library: React.FC<LibraryProps> = ({
     return (
         <div className="
         flex 
-        flex-col">
+        flex-col
+        
+        ">
             <div className="
             flex 
             items-center 
             justify-between 
             px-5 
-            py-4">
+            py-4 ">
                 <div className="
                 inline-flex 
                 items-center 
