@@ -11,6 +11,7 @@ import { useUser } from "@/hooks/useUser";
 import { useSupabaseClient } from "@supabase/auth-helpers-react";
 import { FaUserAlt } from "react-icons/fa";
 import toast from "react-hot-toast";
+import usePlayer from "@/hooks/usePlayer";
 
 
 interface HeaderProps {
@@ -22,7 +23,8 @@ const Header: React.FC<HeaderProps> = ({
     children,
     className
 }) => {
-    const AuthModal = useAuthModal()
+    const player = usePlayer()
+    const authModal = useAuthModal()
     const router = useRouter();
 
     const supabaseClient = useSupabaseClient()
@@ -31,7 +33,7 @@ const Header: React.FC<HeaderProps> = ({
     const handleLogout = async () => {
         const {error} = await supabaseClient.auth.signOut();
 
-        // TODO: Reset any playing songs in future
+        player.reset()
         router.refresh()
 
         if (error) {
@@ -132,7 +134,7 @@ const Header: React.FC<HeaderProps> = ({
                     <>
                         <div>
                             <Button 
-                            onClick={AuthModal.onOpen} 
+                            onClick={authModal.onOpen} 
                             className="
                             bg-transparent 
                             text-neutral-300 
@@ -142,7 +144,7 @@ const Header: React.FC<HeaderProps> = ({
                         </div>
                         <div>
                             <Button 
-                            onClick={AuthModal.onOpen} 
+                            onClick={authModal.onOpen} 
                             className="
                             bg-white 
                             px-6 
