@@ -2,30 +2,48 @@
 @tailwind components;
 @tailwind utilities;
 
+@layer utilities {
+  .hover\:bg-gradient-to-r-right:hover {
+    background-image: linear-gradient(to right, #000000 70%, #d4af37);
+  }
+}
+
+
 html, body, :root {
   height: 100%;
   background-color: black;
   color-scheme: dark;
 }
 
-.shadow-vintage {
-  box-shadow: 0px 2px 5px rgba(0, 0, 0, 0.8), 0px 0px 10px rgba(255, 223, 0, 0.4);
-}
+  /* Shadows */
+  .shadow-vintage {
+    box-shadow: 0px 2px 5px rgba(0, 0, 0, 0.8), 0px 0px 10px rgba(255, 223, 0, 0.4);
+  }
 
-.shadow-inner-vintage {
-  box-shadow: inset 0 0 10px rgba(0, 0, 0, 0.5), 0 0 15px rgba(255, 223, 0, 0.6);
+  .shadow-inner-vintage {
+    box-shadow: inset 0 0 10px rgba(0, 0, 0, 0.5), 0 0 15px rgba(255, 223, 0, 0.6);
+  }
+
+  .shadow-vintage-sm {
+    box-shadow: 0px 2px 5px rgba(0, 0, 0, 0.5), 0px 0px 5px rgba(255, 223, 0, 0.4);
+  }
+
+  .hover\:shadow-vintage-lg:hover {
+    box-shadow: 0px 6px 15px rgba(255, 223, 0, 0.8), 0px 4px 10px rgba(0, 0, 0, 0.7);
+  }
+
+  .hover\:shadow-vintage:hover {
+    box-shadow: 0px 4px 10px rgba(255, 223, 0, 0.6), 0px 2px 5px rgba(0, 0, 0, 0.8);
+  }
+
+
+/* Background Colors */
+.bg-charcoal {
+  background-color: #2e2e2e;
 }
 
 .bg-gold {
   background-color: #d4af37;
-}
-
-.border-gold {
-  border-color: #d4af37;
-}
-
-.text-gold {
-  color: #d4af37;
 }
 
 .bg-gradient-to-b {
@@ -36,12 +54,35 @@ html, body, :root {
   background-image: linear-gradient(to right, #d4af37, #000000);
 }
 
-.hover\:shadow-vintage:hover {
-  box-shadow: 0px 4px 10px rgba(255, 223, 0, 0.6), 0px 2px 5px rgba(0, 0, 0, 0.8);
-}
+  /* Borders */
+  .border-gold {
+    border-color: #d4af37;
+  }
 
-.bg-texture {
-  background-image: url('/textures/fabric-light.png'); /* Replace with your texture path */
+  .border-neutral-700 {
+    border-color: #4a4a4a;
+  }
+
+  .hover\:border-gold:hover {
+    border-color: #d4af37;
+  }
+
+   /* Text Colors */
+   .text-gold {
+    color: #d4af37;
+  }
+
+  .text-ivory {
+    color: #f8f1e1;
+  }
+
+  .group-hover\:text-gold:hover {
+    color: #d4af37;
+  }
+
+ /* Textures */
+ .bg-texture {
+  background-color: #2e2e2e; /* Fallback charcoal color */
   background-size: cover;
   background-repeat: repeat;
 }

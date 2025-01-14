@@ -79,24 +79,25 @@ const Library: React.FC<LibraryProps> = ({ songs }) => {
                 </h2>
                 <div className="flex flex-col gap-y-3">
                     {categories.map((category) => (
-                        <div
-                            key={category.id}
-                            className="
-                            flex items-center gap-x-3 cursor-pointer 
-                            hover:scale-105 transition-transform duration-200
-                            bg-gradient-to-r from-black via-gold to-black p-3 rounded-lg border border-gold
-                            hover:shadow-lg hover:shadow-gold
-                            "
-                        >
-                            <div className="relative w-12 h-12 rounded-lg overflow-hidden border border-gold">
-                                <img
-                                    src={category.image}
-                                    alt={category.name}
-                                    className="object-cover w-full h-full"
-                                />
-                            </div>
-                            <p className="text-gold font-medium">{category.name}</p>
-                        </div>
+                       <div
+                       key={category.id}
+                       className="
+                       flex items-center gap-x-3 cursor-pointer 
+                       hover:scale-105 transition-transform duration-200
+                       bg-black p-3 rounded-lg border border-gold
+                       hover:bg-gradient-to-r-right hover:shadow-lg hover:shadow-gold
+                       "
+                     >
+                       <div className="relative w-12 h-12 rounded-lg overflow-hidden border border-gold">
+                         <img
+                           src={category.image}
+                           alt={category.name}
+                           className="object-cover w-full h-full"
+                         />
+                       </div>
+                       <p className="text-gold font-medium">{category.name}</p>
+                     </div>
+                     
                     ))}
                 </div>
             </div>
