@@ -39,7 +39,7 @@ export const MyUserContextProvider = (props: Props) => {
 
     const getSubscription = () => supabase.from('subscriptions')
                                             .select('*, prices(*, products(*))')
-                                                .in('status', ['trailing', 'active'])
+                                                .in('status', ['trialing', 'active'])
                                                 .single()
 
     useEffect(() => {
