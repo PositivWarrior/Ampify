@@ -65,7 +65,16 @@ const Sidebar: React.FC<SidebarProps> = ({
                     </div>
                 </Box>
                 <Box className="overflow-y-auto h-full">
-                    <Library songs={songs}/>
+                    <Library 
+                        songs={songs} 
+                        onCategorySelect={(category, songs) => {
+                            // You might want to use a global state management solution here
+                            // For now, we'll use a simple event emitter pattern
+                            window.dispatchEvent(new CustomEvent('categorySelect', {
+                                detail: { category, songs }
+                            }));
+                        }}
+                    />
                 </Box>
             </div>
             <main className="h-full flex-1 overflow-auto py-2">
