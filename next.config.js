@@ -2,9 +2,13 @@
 const nextConfig = {
     images: {
         domains: [
-            'e-cdns-images.dzcdn.net',
+            'i.scdn.co',
+            't.scdn.co',
+            'mosaic.scdn.co',
+            'wrapped-images.spotifycdn.com',
+            'image-cdn-fa.spotifycdn.com',
             'hrczewiqakelnrfbxsrl.supabase.co',
-            // ... other domains you might have
+            'platform-lookaside.fbsbx.com'
         ]
     }
 };

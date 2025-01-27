@@ -3,6 +3,7 @@
 import { TbPlaylist } from 'react-icons/tb';
 import { AiOutlinePlus } from 'react-icons/ai';
 import { useState, useEffect } from 'react';
+import Image from 'next/image';
 
 import useAuthModal from '@/hooks/useAuthModal';
 import { useUser } from '@/hooks/useUser';
@@ -14,24 +15,21 @@ import useSubscribeModal from '@/hooks/useSubscribeModal';
 
 interface LibraryProps {
     songs: Song[];
-    onCategorySelect?: (category: DeezerGenre, songs: Song[]) => void;
+    onCategorySelect?: (category: SpotifyCategory, songs: Song[]) => void;
 }
 
-interface DeezerTrack {
-    id: number;
-    title: string;
-    artist: {
-        name: string;
-    };
+interface SpotifyTrack {
+    id: string;
+    name: string;
+    artists: Array<{ name: string }>;
     album: {
-        cover_medium: string;
+        images: Array<{ url: string }>;
     };
-    preview: string; // 30-second preview URL
-    duration: number;
+    preview_url: string;
 }
 
-interface DeezerGenre {
-    id: number;
+interface SpotifyCategory {
+    id: string;
     name: string;
     picture: string;
     picture_medium: string;
@@ -39,26 +37,29 @@ interface DeezerGenre {
     type: string;
 }
 
-const FALLBACK_GENRES = [
+const FALLBACK_CATEGORIES = [
     {
-        id: 132,
+        id: "pop",
         name: "Pop",
-        picture: "https://e-cdns-images.dzcdn.net/images/misc/db7a604d9e7634a67d45cfc86b48370a/56x56-000000-80-0-0.jpg",
-        picture_medium: "https://e-cdns-images.dzcdn.net/images/misc/db7a604d9e7634a67d45cfc86b48370a/250x250-000000-80-0-0.jpg",
+        picture: "/images/genres/pop.png",
+        picture_medium: "/images/genres/pop.png",
+        picture_big: "/images/genres/pop.png",
         type: "genre"
     },
     {
-        id: 116,
-        name: "Rap/Hip Hop",
-        picture: "https://e-cdns-images.dzcdn.net/images/misc/5c27115d3b797954afff59199dad98d1/56x56-000000-80-0-0.jpg",
-        picture_medium: "https://e-cdns-images.dzcdn.net/images/misc/5c27115d3b797954afff59199dad98d1/250x250-000000-80-0-0.jpg",
+        id: "hiphop",
+        name: "Hip Hop",
+        picture: "/images/genres/hiphop.png",
+        picture_medium: "/images/genres/hiphop.png",
+        picture_big: "/images/genres/hiphop.png",
         type: "genre"
     },
     {
-        id: 152,
+        id: "rock",
         name: "Rock",
-        picture: "https://e-cdns-images.dzcdn.net/images/misc/b36ca681666d617edd0dcb5ab389a6ac/56x56-000000-80-0-0.jpg",
-        picture_medium: "https://e-cdns-images.dzcdn.net/images/misc/b36ca681666d617edd0dcb5ab389a6ac/250x250-000000-80-0-0.jpg",
+        picture: "/images/genres/rock.png",
+        picture_medium: "/images/genres/rock.png",
+        picture_big: "/images/genres/rock.png",
         type: "genre"
     }
 ];
@@ -66,9 +67,9 @@ const FALLBACK_GENRES = [
 const Library: React.FC<LibraryProps> = ({ songs, onCategorySelect }) => {
     const [showAllSongs, setShowAllSongs] = useState(false);
     const [showAllCategories, setShowAllCategories] = useState(false);
-    const [selectedCategory, setSelectedCategory] = useState<number | null>(null);
+    const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
     const [categorySongs, setCategorySongs] = useState<Song[]>([]);
-    const [categories, setCategories] = useState<DeezerGenre[]>([]);
+    const [categories, setCategories] = useState<SpotifyCategory[]>([]);
     const [isLoading, setIsLoading] = useState(false);
     const [error, setError] = useState<string | null>(null);
     
@@ -82,7 +83,7 @@ const Library: React.FC<LibraryProps> = ({ songs, onCategorySelect }) => {
         const fetchCategories = async () => {
             try {
                 setIsLoading(true);
-                const response = await fetch('/api/deezer/genres');
+                const response = await fetch('/api/spotify/genres');
                 
                 if (!response.ok) {
                     throw new Error('Failed to fetch genres');
@@ -103,7 +104,7 @@ const Library: React.FC<LibraryProps> = ({ songs, onCategorySelect }) => {
             } catch (error) {
                 console.error('Error fetching categories:', error);
                 setError('Failed to load categories from server. Using fallback data.');
-                setCategories(FALLBACK_GENRES);
+                setCategories(FALLBACK_CATEGORIES);
             } finally {
                 setIsLoading(false);
             }
@@ -127,13 +128,13 @@ const Library: React.FC<LibraryProps> = ({ songs, onCategorySelect }) => {
         return uploadModal.onOpen();
     };
 
-    const fetchCategorySongs = async (genreId: number) => {
+    const fetchCategorySongs = async (categoryId: string) => {
         setIsLoading(true);
-        setCategorySongs([]); // Clear previous songs
-        setError(null); // Reset error state
+        setCategorySongs([]);
+        setError(null);
         
         try {
-            const response = await fetch(`/api/deezer/genre/${genreId}`);
+            const response = await fetch(`/api/spotify/genre/${categoryId}`);
             const data = await response.json();
             
             if (!response.ok || data.error) {
@@ -146,9 +147,8 @@ const Library: React.FC<LibraryProps> = ({ songs, onCategorySelect }) => {
 
             setCategorySongs(data.data);
             
-            // Emit selected category and songs to parent
             if (onCategorySelect) {
-                const selectedCategoryData = categories.find(c => c.id === genreId);
+                const selectedCategoryData = categories.find(c => c.id === categoryId);
                 if (selectedCategoryData) {
                     onCategorySelect(selectedCategoryData, data.data);
                 }
@@ -162,7 +162,7 @@ const Library: React.FC<LibraryProps> = ({ songs, onCategorySelect }) => {
         }
     };
 
-    const handleCategoryClick = (category: DeezerGenre) => {
+    const handleCategoryClick = (category: SpotifyCategory) => {
         setSelectedCategory(category.id);
         fetchCategorySongs(category.id);
     };
@@ -221,10 +221,13 @@ const Library: React.FC<LibraryProps> = ({ songs, onCategorySelect }) => {
                                 `}
                             >
                                 <div className="relative w-12 h-12 rounded-lg overflow-hidden border border-gold">
-                                    <img
-                                        src={category.picture_medium}
+                                    <Image
+                                        src={category.picture_medium || '/images/liked.png'}
                                         alt={category.name}
-                                        className="object-cover w-full h-full"
+                                        width={48}
+                                        height={48}
+                                        className="object-cover"
+                                        unoptimized
                                     />
                                 </div>
                                 <p className="text-gold font-medium">{category.name}</p>
