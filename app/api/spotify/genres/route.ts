@@ -46,7 +46,7 @@ export async function GET() {
             }))
         };
 
-        console.log('Formatted categories:', formattedData); // For debugging
+        // console.log('Formatted categories:', formattedData); // For debugging
 
         return NextResponse.json(formattedData);
     } catch (error) {
