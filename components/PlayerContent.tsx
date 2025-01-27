@@ -122,7 +122,8 @@ const PlayerContent: React.FC<PlayerContentProps> = ({
                 items-center
                 justify-center
                 rounded-full
-                bg-white
+                bg-gold
+                hover:text-white 
                 p-1
                 cursor-pointer
                 "
@@ -146,7 +147,7 @@ const PlayerContent: React.FC<PlayerContentProps> = ({
                 size={30}
                 className="
                 text-neutral-400 
-                hover:text-white 
+                hover:text-gold 
                 cursor-pointer 
                 transition"
                 />
@@ -159,7 +160,7 @@ const PlayerContent: React.FC<PlayerContentProps> = ({
                 w-10
                 h-10
                 rounded-full
-                bg-white
+                bg-gold
                 p-1
                 cursor-pointer
                 "
@@ -175,7 +176,7 @@ const PlayerContent: React.FC<PlayerContentProps> = ({
                 size={30}
                 className="
                 text-neutral-400 
-                hover:text-white 
+                hover:text-gold 
                 cursor-pointer 
                 transition
                 "
@@ -199,6 +200,7 @@ const PlayerContent: React.FC<PlayerContentProps> = ({
                 <VolumeIcon 
                 onClick={toggleMute}
                 size={34}
+                color="gold"
                 className="cursor-pointer"
                 />
                 <Slider 

@@ -46,7 +46,7 @@ const Slider: React.FC<SliderProps> = ({
                 <RadixSlider.Range 
                 className='
                 absolute
-                bg-white
+                bg-gold
                 rounded-full
                 h-full
                 '
