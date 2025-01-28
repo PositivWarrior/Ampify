@@ -1,3 +1,5 @@
+import { NextResponse } from "next/server";
+
 export async function getSpotifyToken() {
     if (typeof window !== 'undefined') {
       // Client-side: Use API route
@@ -39,3 +41,31 @@ export async function getSpotifyToken() {
     }
   }
   
+  // app/api/spotify/token/route.ts
+  export async function GET() {
+    try {
+      const authOptions = {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/x-www-form-urlencoded',
+          'Authorization': 'Basic ' + Buffer.from(
+            process.env.SPOTIFY_CLIENT_ID + ':' + process.env.SPOTIFY_CLIENT_SECRET
+          ).toString('base64')
+        },
+        body: 'grant_type=client_credentials'
+      };
+  
+      const response = await fetch('https://accounts.spotify.com/api/token', authOptions);
+      const data = await response.json();
+      
+      return NextResponse.json({
+        accessToken: data.access_token,
+        expiresIn: data.expires_in
+      });
+    } catch (error) {
+      return NextResponse.json(
+        { error: 'Failed to fetch Spotify token' },
+        { status: 500 }
+      );
+    }
+  }

@@ -3,26 +3,22 @@ import { NextRequest, NextResponse } from "next/server";
 
 export async function middleware(req: NextRequest) {
     const res = NextResponse.next();
-    
+
     // Add CORS headers for API routes
     if (req.nextUrl.pathname.startsWith('/api/')) {
         res.headers.set('Access-Control-Allow-Origin', '*');
         res.headers.set('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, OPTIONS');
         res.headers.set('Access-Control-Allow-Headers', 'Content-Type, Authorization');
-        
+
         // Handle preflight requests
         if (req.method === 'OPTIONS') {
             return res;
         }
     }
 
-    // Handle Supabase auth
-    const supabase = createMiddlewareClient({
-        req,
-        res,
-    });
-
-    await supabase.auth.getSession();
+    // Configure Supabase middleware client
+    const supabase = createMiddlewareClient({ req, res }); // Pass req and res correctly
+    await supabase.auth.getSession(); // Fetch the user session securely
 
     return res;
 }

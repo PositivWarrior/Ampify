@@ -2,97 +2,80 @@ import { NextResponse } from 'next/server';
 import { getSpotifyToken } from '@/lib/spotify';
 
 export async function GET(
-    request: Request,
-    { params }: { params: { id: string } }
+  req: Request,
+  context: { params: { id: string } }
 ) {
-    if (!params.id) {
-        return NextResponse.json(
-            { error: 'Missing category ID' },
-            { status: 400 }
-        );
+  try {
+    const { id: categoryId } = context.params;
+
+    if (!categoryId || categoryId.trim() === '') {
+      return NextResponse.json(
+        { error: 'Invalid or missing category ID' },
+        { status: 400 }
+      );
     }
 
-    try {
-        const token = await getSpotifyToken();
-        if (!token) throw new Error('Spotify token unavailable');
-
-        // Get category details first
-        const categoryResponse = await fetch(
-        `https://api.spotify.com/v1/browse/categories/${params.id}`,
-        {
-          headers: { Authorization: `Bearer ${token}` },
-          next: { revalidate: 3600 }
-            }
-        );
-  
-        const categoryData = await categoryResponse.json();
-        if (!categoryResponse.ok) {
-            throw new Error(categoryData.error?.message || 'Failed to fetch category');
-        }
-        
-        // First get a playlist for this category
-        const playlistResponse = await fetch(
-            `https://api.spotify.com/v1/browse/categories/${params.id}/playlists?limit=1`,
-            {
-                headers: {
-                    'Authorization': `Bearer ${token}`,
-                },
-                next: { revalidate: 3600 }
-            }
-        );
-
-        const playlistData = await playlistResponse.json();
-
-        if (!playlistResponse.ok || playlistData.error) {
-            throw new Error(playlistData.error?.message || `Spotify API error: ${playlistResponse.status}`);
-        }
-
-        const playlistId = playlistData.playlists.items[0]?.id;
-        if (!playlistId) {
-            throw new Error('No playlist found for this category');
-        }
-
-        // Then get tracks from that playlist
-        const tracksResponse = await fetch(
-            `https://api.spotify.com/v1/playlists/${playlistId}/tracks?limit=10`,
-            {
-                headers: {
-                    'Authorization': `Bearer ${token}`,
-                },
-                next: { revalidate: 3600 }
-            }
-        );
-
-        const tracksData = await tracksResponse.json();
-
-        if (!tracksResponse.ok || tracksData.error) {
-            throw new Error(tracksData.error?.message || `Spotify API error: ${tracksResponse.status}`);
-        }
-
-        // Transform the data to match your Song type
-        const formattedData = {
-            category: {
-                id: params.id,
-                name: categoryData.name,
-                icons: categoryData.icons,
-            },
-            songs: tracksData.items.map((item: any) => ({
-                id: item.track.id,
-                title: item.track.name,
-                author: item.track.artists.map((artist: any) => artist.name).join(', '),
-                song_path: item.track.preview_url,
-                image_path: item.track.album.images[1]?.url || item.track.album.images[0]?.url,
-            })).filter((track: any) => track.song_path) // Only include tracks with preview URLs
-        };
-
-        return NextResponse.json(formattedData);
-    } catch (error) {
-        const errorMessage = error instanceof Error ? error.message : 'Unknown error occurred';
-        console.error('Error fetching from Spotify:', errorMessage);
-        
-        return NextResponse.json(
-            { error: 'Failed to fetch data', details: errorMessage },
-            { status: 500 }
-        );
+    const token = await getSpotifyToken();
+    if (!token) {
+      return NextResponse.json(
+        { error: 'Spotify token unavailable' },
+        { status: 401 }
+      );
     }
-} 
+
+    console.log('Fetching details for category ID:', categoryId);
+
+    // Fetch category details
+    const categoryResponse = await fetch(
+      `https://api.spotify.com/v1/browse/categories/${categoryId}`,
+      {
+        headers: { Authorization: `Bearer ${token}` },
+      }
+    );
+
+    if (!categoryResponse.ok) {
+      const error = await categoryResponse.json();
+      console.error('Spotify API Error (Category):', error);
+      throw new Error('Failed to fetch category details');
+    }
+
+    const categoryData = await categoryResponse.json();
+
+    // Fetch playlists for the category
+    const playlistsResponse = await fetch(
+      `https://api.spotify.com/v1/browse/categories/${categoryId}/playlists?limit=10`,
+      {
+        headers: { Authorization: `Bearer ${token}` },
+      }
+    );
+
+    if (!playlistsResponse.ok) {
+      const error = await playlistsResponse.json();
+      console.error('Spotify API Error (Playlists):', error);
+      throw new Error('Failed to fetch category playlists');
+    }
+
+    const playlistsData = await playlistsResponse.json();
+
+    const formattedData = {
+      category: {
+        id: categoryId,
+        name: categoryData.name,
+        icons: categoryData.icons,
+      },
+      playlists: playlistsData.playlists.items.map((item: any) => ({
+        id: item.id,
+        name: item.name,
+        images: item.images,
+      })),
+    };
+
+    return NextResponse.json(formattedData);
+  } catch (error) {
+    console.error('Error in Spotify API route:', error);
+    return NextResponse.json(
+      { error: 'Failed to fetch data', details: error.message },
+      { status: 500 }
+    );
+  }
+}
