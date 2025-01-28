@@ -37,32 +37,7 @@ interface SpotifyCategory {
     type: string;
 }
 
-const FALLBACK_CATEGORIES = [
-    {
-        id: "pop",
-        name: "Pop",
-        picture: "/images/genres/pop.png",
-        picture_medium: "/images/genres/pop.png",
-        picture_big: "/images/genres/pop.png",
-        type: "genre"
-    },
-    {
-        id: "hiphop",
-        name: "Hip Hop",
-        picture: "/images/genres/hiphop.png",
-        picture_medium: "/images/genres/hiphop.png",
-        picture_big: "/images/genres/hiphop.png",
-        type: "genre"
-    },
-    {
-        id: "rock",
-        name: "Rock",
-        picture: "/images/genres/rock.png",
-        picture_medium: "/images/genres/rock.png",
-        picture_big: "/images/genres/rock.png",
-        type: "genre"
-    }
-];
+
 
 const Library: React.FC<LibraryProps> = ({ songs, onCategorySelect }) => {
     const [showAllSongs, setShowAllSongs] = useState(false);
@@ -104,7 +79,7 @@ const Library: React.FC<LibraryProps> = ({ songs, onCategorySelect }) => {
             } catch (error) {
                 console.error('Error fetching categories:', error);
                 setError('Failed to load categories from server. Using fallback data.');
-                setCategories(FALLBACK_CATEGORIES);
+                
             } finally {
                 setIsLoading(false);
             }
@@ -132,35 +107,41 @@ const Library: React.FC<LibraryProps> = ({ songs, onCategorySelect }) => {
         setIsLoading(true);
         setCategorySongs([]);
         setError(null);
-        
+      
         try {
-            const response = await fetch(`/api/spotify/genre/${categoryId}`);
-            const data = await response.json();
-            
-            if (!response.ok || data.error) {
-                throw new Error(data.error?.details || data.error || 'Failed to fetch songs');
+          const response = await fetch(`/api/spotify/genre/${categoryId}`);
+          const { category, songs } = await response.json();
+          const data = await response.json();
+      
+          if (!response.ok || !songs) {
+            throw new Error('Failed to fetch category songs');
+          }
+      
+          if (!data.data || !Array.isArray(data.data)) {
+            throw new Error('Invalid songs data format');
+          }
+      
+          const songsWithAudio = data.data.filter((song: Song) => song.song_path);
+          if (songsWithAudio.length === 0) {
+            throw new Error('No playable tracks found in this category');
+          }
+      
+          setCategorySongs(songsWithAudio);
+          
+          if (onCategorySelect) {
+            const selectedCategoryData = categories.find(c => c.id === categoryId);
+            if (selectedCategoryData) {
+              onCategorySelect(selectedCategoryData, songsWithAudio);
             }
-
-            if (!data.data || !Array.isArray(data.data)) {
-                throw new Error('Invalid data format received');
-            }
-
-            setCategorySongs(data.data);
-            
-            if (onCategorySelect) {
-                const selectedCategoryData = categories.find(c => c.id === categoryId);
-                if (selectedCategoryData) {
-                    onCategorySelect(selectedCategoryData, data.data);
-                }
-            }
+          }
         } catch (error) {
-            console.error('Error fetching category songs:', error);
-            setError(error instanceof Error ? error.message : 'Failed to load songs');
-            setCategorySongs([]);
+          console.error('Error fetching category songs:', error);
+          setError(error instanceof Error ? error.message : 'Failed to load songs');
+          setCategorySongs([]);
         } finally {
-            setIsLoading(false);
+          setIsLoading(false);
         }
-    };
+      };
 
     const handleCategoryClick = (category: SpotifyCategory) => {
         setSelectedCategory(category.id);

@@ -1,7 +1,5 @@
 import Stripe from "stripe";
 
-
-
 export interface Song {
     id: string;
     user_id: string;
@@ -48,8 +46,6 @@ export interface Price {
 export interface ProductWithPrice extends Product {
     prices?: Price[];
 }
-
-
 export interface Subscription {
     id: string;
     user_id: string;
@@ -68,3 +64,8 @@ export interface Subscription {
     trial_end?: string;
     prices?: Price;
 }
+export interface SpotifyCategory {
+    id: string;
+    name: string;
+    icons: Array<{ url: string }>;
+  }

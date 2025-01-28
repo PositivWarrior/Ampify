@@ -4,31 +4,30 @@ import { Song } from "@/types";
 import ListItem from "@/components/ListItem";
 import { useState, useEffect } from "react";
 
-interface DeezerGenre {
-    id: number;
+interface SpotifyCategory {
+    id: string;
     name: string;
-    picture: string;
-    picture_medium: string;
-    type: string;
-}
+    icons: Array<{ url: string }>;
+  }
 
-export default function CategoryContent() {
-    const [selectedCategory, setSelectedCategory] = useState<DeezerGenre | null>(null);
+  export default function CategoryContent() {
+    const [selectedCategory, setSelectedCategory] = useState<SpotifyCategory | null>(null);
     const [categorySongs, setCategorySongs] = useState<Song[]>([]);
 
     useEffect(() => {
-        const handleCategorySelect = (event: CustomEvent) => {
-            const { category, songs } = event.detail;
-            setSelectedCategory(category);
-            setCategorySongs(songs);
+        const handler = (event: Event) => {
+          const { category, songs } = (event as CustomEvent).detail;
+          setSelectedCategory({
+            id: category.id,
+            name: category.name,
+            icons: [{ url: category.picture_medium }]
+          });
+          setCategorySongs(songs);
         };
-
-        window.addEventListener('categorySelect', handleCategorySelect as EventListener);
-
-        return () => {
-            window.removeEventListener('categorySelect', handleCategorySelect as EventListener);
-        };
-    }, []);
+    
+        window.addEventListener('categorySelect', handler);
+        return () => window.removeEventListener('categorySelect', handler);
+      }, []);
 
     if (!selectedCategory || categorySongs.length === 0) {
         return null;
@@ -47,7 +46,7 @@ export default function CategoryContent() {
                         key={song.id}
                         name={song.title}
                         href={`/songs/${song.id}`}
-                        image={song.image_path}
+                        image={song.image_path || '/images/music-placeholder.png'}
                     />
                 ))}
             </div>

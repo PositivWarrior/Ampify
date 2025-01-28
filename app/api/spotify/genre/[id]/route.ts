@@ -14,6 +14,21 @@ export async function GET(
 
     try {
         const token = await getSpotifyToken();
+        if (!token) throw new Error('Spotify token unavailable');
+
+        // Get category details first
+        const categoryResponse = await fetch(
+        `https://api.spotify.com/v1/browse/categories/${params.id}`,
+        {
+          headers: { Authorization: `Bearer ${token}` },
+          next: { revalidate: 3600 }
+            }
+        );
+  
+        const categoryData = await categoryResponse.json();
+        if (!categoryResponse.ok) {
+            throw new Error(categoryData.error?.message || 'Failed to fetch category');
+        }
         
         // First get a playlist for this category
         const playlistResponse = await fetch(
@@ -56,7 +71,12 @@ export async function GET(
 
         // Transform the data to match your Song type
         const formattedData = {
-            data: tracksData.items.map((item: any) => ({
+            category: {
+                id: params.id,
+                name: categoryData.name,
+                icons: categoryData.icons,
+            },
+            songs: tracksData.items.map((item: any) => ({
                 id: item.track.id,
                 title: item.track.name,
                 author: item.track.artists.map((artist: any) => artist.name).join(', '),
