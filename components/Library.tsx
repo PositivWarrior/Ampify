@@ -78,7 +78,7 @@ const Library: React.FC<LibraryProps> = ({ songs, onCategorySelect }) => {
       }
 
       setCategorySongs(songs);
-      onCategorySelect?.(category, songs); // Trigger callback if provided
+      onCategorySelect?.(category, songs);
     } catch (err) {
       console.error('Error fetching category songs:', err);
       setError(err instanceof Error ? err.message : 'Failed to load songs');
@@ -147,30 +147,43 @@ const Library: React.FC<LibraryProps> = ({ songs, onCategorySelect }) => {
           {isLoading ? (
             <div className="text-gold">Loading categories...</div>
           ) : (
-            displayedCategories.map((category) => (
-              <div
-                key={category.id}
-                onClick={() => handleCategoryClick(category)}
-                className={`
-                  flex items-center gap-x-3 cursor-pointer 
-                  hover:scale-105 transition-transform duration-200
-                  bg-black p-3 rounded-lg border border-gold
-                  ${selectedCategory === category.id ? 'bg-gradient-to-r-right' : ''}
-                `}
-              >
-                <div className="relative w-12 h-12 rounded-lg overflow-hidden border border-gold">
-                  <Image
-                    src={category.picture_medium || '/images/liked.png'}
-                    alt={category.name}
-                    width={48}
-                    height={48}
-                    className="object-cover"
-                    unoptimized
-                  />
+            <>
+              {displayedCategories.map((category) => (
+                <div
+                  key={category.id}
+                  onClick={() => handleCategoryClick(category)}
+                  className={`
+                    flex items-center gap-x-3 cursor-pointer 
+                    hover:scale-105 transition-transform duration-200
+                    bg-black p-3 rounded-lg border border-gold
+                    ${selectedCategory === category.id ? 'bg-gradient-to-r-right' : ''}
+                  `}
+                >
+                  <div className="relative w-12 h-12 rounded-lg overflow-hidden border border-gold">
+                    <Image
+                      src={category.picture_medium || '/images/liked.png'}
+                      alt={category.name}
+                      width={48}
+                      height={48}
+                      className="object-cover"
+                      unoptimized
+                    />
+                  </div>
+                  <p className="text-gold font-medium">{category.name}</p>
                 </div>
-                <p className="text-gold font-medium">{category.name}</p>
-              </div>
-            ))
+              ))}
+              {categories.length > 3 && (
+                <button
+                  onClick={() => setShowAllCategories(!showAllCategories)}
+                  className="text-gold hover:text-white transition mt-2 text-sm"
+                >
+                  {showAllCategories 
+                    ? 'Show Less' 
+                    : `Show More Categories (${categories.length - 3} more)`
+                  }
+                </button>
+              )}
+            </>
           )}
         </div>
       </div>
