@@ -69,7 +69,7 @@ export const spotifyApi = {
 
       const categoryData = await categoryResponse.json();
 
-      // Get category playlists
+      // Strategy 1: Try category playlists first
       const playlistsResponse = await fetch(
         `https://api.spotify.com/v1/browse/categories/${categoryId}/playlists?limit=5&country=US`,
         {
@@ -79,13 +79,54 @@ export const spotifyApi = {
         }
       );
 
-      // If category has no playlists, try recommendations
-      if (!playlistsResponse.ok) {
-        console.log('No playlists found for category, fetching recommendations instead');
+      let songs: any[] = [];
+
+      if (playlistsResponse.ok) {
+        const playlistsData = await playlistsResponse.json();
+        const playlists = playlistsData.playlists?.items || [];
+
+        // Get tracks from playlists
+        const processedTrackIds = new Set();
         
-        // Get recommendations based on genre seed
+        for (const playlist of playlists.slice(0, 3)) {
+          const tracksResponse = await fetch(
+            `https://api.spotify.com/v1/playlists/${playlist.id}/tracks?limit=10`,
+            {
+              headers: {
+                Authorization: `Bearer ${token}`,
+              },
+            }
+          );
+
+          if (tracksResponse.ok) {
+            const tracksData = await tracksResponse.json();
+            const playlistSongs = tracksData.items
+              .filter((item: any) => {
+                if (!item.track?.preview_url || processedTrackIds.has(item.track.id)) {
+                  return false;
+                }
+                processedTrackIds.add(item.track.id);
+                return true;
+              })
+              .map((item: any) => ({
+                id: item.track.id,
+                title: item.track.name,
+                author: item.track.artists.map((artist: any) => artist.name).join(', '),
+                song_path: item.track.preview_url,
+                image_path: item.track.album.images[0]?.url || '/images/music-placeholder.png',
+              }));
+
+            songs.push(...playlistSongs);
+          }
+        }
+      }
+
+      // Strategy 2: If no songs from playlists, try recommendations
+      if (songs.length === 0) {
+        console.log('No songs from playlists, trying recommendations...');
+        const genreSeed = categoryData.name.toLowerCase().replace(/[^a-z0-9]/g, '-');
         const recommendationsResponse = await fetch(
-          `https://api.spotify.com/v1/recommendations?limit=20&seed_genres=${categoryId}`,
+          `https://api.spotify.com/v1/recommendations?limit=20&seed_genres=${genreSeed}&min_popularity=50`,
           {
             headers: {
               Authorization: `Bearer ${token}`,
@@ -93,58 +134,25 @@ export const spotifyApi = {
           }
         );
 
-        if (!recommendationsResponse.ok) {
-          console.error('Recommendations fetch error:', await recommendationsResponse.text());
-          return {
-            category: {
-              id: categoryId,
-              name: categoryData.name,
-              icons: categoryData.icons,
-            },
-            songs: [] // Return empty songs array if both attempts fail
-          };
+        if (recommendationsResponse.ok) {
+          const recommendationsData = await recommendationsResponse.json();
+          songs = recommendationsData.tracks
+            .filter((track: any) => track.preview_url)
+            .map((track: any) => ({
+              id: track.id,
+              title: track.name,
+              author: track.artists.map((artist: any) => artist.name).join(', '),
+              song_path: track.preview_url,
+              image_path: track.album.images[0]?.url || '/images/music-placeholder.png',
+            }));
         }
-
-        const recommendationsData = await recommendationsResponse.json();
-        const songs = recommendationsData.tracks
-          .filter((track: any) => track.preview_url)
-          .map((track: any) => ({
-            id: track.id,
-            title: track.name,
-            author: track.artists.map((artist: any) => artist.name).join(', '),
-            song_path: track.preview_url,
-            image_path: track.album.images[0]?.url || '/images/music-placeholder.png',
-          }));
-
-        return {
-          category: {
-            id: categoryId,
-            name: categoryData.name,
-            icons: categoryData.icons,
-          },
-          songs
-        };
       }
 
-      const playlistsData = await playlistsResponse.json();
-      const playlists = playlistsData.playlists.items;
-
-      if (!playlists || playlists.length === 0) {
-        return {
-          category: {
-            id: categoryId,
-            name: categoryData.name,
-            icons: categoryData.icons,
-          },
-          songs: []
-        };
-      }
-
-      // Get tracks from all playlists
-      const allSongs = [];
-      for (const playlist of playlists.slice(0, 2)) { // Limit to 2 playlists for performance
-        const tracksResponse = await fetch(
-          `https://api.spotify.com/v1/playlists/${playlist.id}/tracks?limit=10`,
+      // Strategy 3: If still no songs, try featured playlists
+      if (songs.length === 0) {
+        console.log('No songs from recommendations, trying featured playlists...');
+        const featuredResponse = await fetch(
+          'https://api.spotify.com/v1/browse/featured-playlists?limit=2',
           {
             headers: {
               Authorization: `Bearer ${token}`,
@@ -152,23 +160,36 @@ export const spotifyApi = {
           }
         );
 
-        if (!tracksResponse.ok) {
-          console.error('Tracks fetch error:', await tracksResponse.text());
-          continue; // Skip this playlist if there's an error
+        if (featuredResponse.ok) {
+          const featuredData = await featuredResponse.json();
+          const playlists = featuredData.playlists?.items || [];
+
+          for (const playlist of playlists) {
+            const tracksResponse = await fetch(
+              `https://api.spotify.com/v1/playlists/${playlist.id}/tracks?limit=10`,
+              {
+                headers: {
+                  Authorization: `Bearer ${token}`,
+                },
+              }
+            );
+
+            if (tracksResponse.ok) {
+              const tracksData = await tracksResponse.json();
+              const playlistSongs = tracksData.items
+                .filter((item: any) => item.track?.preview_url)
+                .map((item: any) => ({
+                  id: item.track.id,
+                  title: item.track.name,
+                  author: item.track.artists.map((artist: any) => artist.name).join(', '),
+                  song_path: item.track.preview_url,
+                  image_path: item.track.album.images[0]?.url || '/images/music-placeholder.png',
+                }));
+
+              songs.push(...playlistSongs);
+            }
+          }
         }
-
-        const tracksData = await tracksResponse.json();
-        const playlistSongs = tracksData.items
-          .filter((item: any) => item.track?.preview_url)
-          .map((item: any) => ({
-            id: item.track.id,
-            title: item.track.name,
-            author: item.track.artists.map((artist: any) => artist.name).join(', '),
-            song_path: item.track.preview_url,
-            image_path: item.track.album.images[0]?.url || '/images/music-placeholder.png',
-          }));
-
-        allSongs.push(...playlistSongs);
       }
 
       return {
@@ -177,7 +198,7 @@ export const spotifyApi = {
           name: categoryData.name,
           icons: categoryData.icons,
         },
-        songs: allSongs,
+        songs: songs.slice(0, 20) // Limit to 20 songs maximum
       };
 
     } catch (error) {
